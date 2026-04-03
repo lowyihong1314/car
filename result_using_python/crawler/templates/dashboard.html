@@ -1,0 +1,1162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Carlist Controller</title>
+    <style>
+      :root {
+        --bg: #f3f0e8;
+        --panel: rgba(255, 252, 246, 0.92);
+        --panel-strong: #fffaf0;
+        --line: #d7cfbf;
+        --ink: #1f2a2c;
+        --muted: #6b756d;
+        --accent: #1f6f5f;
+        --accent-soft: #d8ece7;
+        --danger: #a84734;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(31, 111, 95, 0.18), transparent 32%),
+          radial-gradient(circle at bottom right, rgba(168, 71, 52, 0.12), transparent 30%),
+          linear-gradient(180deg, #f7f4ed 0%, #ece6d8 100%);
+      }
+
+      .shell {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .hero h1 {
+        margin: 0;
+        font-size: clamp(28px, 4vw, 48px);
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+
+      .hero p {
+        margin: 0;
+        color: var(--muted);
+        max-width: 760px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 360px minmax(0, 1fr);
+        gap: 18px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        backdrop-filter: blur(18px);
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(34, 39, 35, 0.08);
+        overflow: hidden;
+      }
+
+      .panel-head {
+        padding: 14px 16px 8px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .panel-head h2 {
+        margin: 0 0 4px;
+        font-size: 17px;
+      }
+
+      .panel-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .panel-body {
+        padding: 14px 16px 16px;
+      }
+
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 11px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .status-chip.idle {
+        background: #efe9da;
+        color: #6b5c36;
+      }
+
+      .status-chip.error {
+        background: #f7dcd6;
+        color: var(--danger);
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .metric {
+        padding: 11px;
+        min-height: 70px;
+        background: var(--panel-strong);
+        border-radius: 14px;
+        border: 1px solid var(--line);
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 21px;
+      }
+
+      .metric span {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .stack {
+        display: grid;
+        gap: 10px;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .field label {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      input, select, button {
+        font: inherit;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      select {
+        width: 100%;
+        padding: 9px 10px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: #fffdf8;
+        color: var(--ink);
+      }
+
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 0;
+        font-size: 13px;
+      }
+
+      .button-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+
+      .primary {
+        background: var(--accent);
+        color: white;
+        font-weight: 700;
+      }
+
+      .ghost {
+        background: transparent;
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) 180px 140px auto;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .tabbar {
+        display: inline-flex;
+        gap: 8px;
+        padding: 6px;
+        border-radius: 16px;
+        background: #f4ede0;
+        border: 1px solid var(--line);
+      }
+
+      .tab {
+        border: 0;
+        border-radius: 12px;
+        padding: 9px 13px;
+        background: transparent;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .chart-panel {
+        margin-bottom: 18px;
+      }
+
+      .chart-layout {
+        display: grid;
+        grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+        gap: 18px;
+        align-items: center;
+      }
+
+      .chart-wrap {
+        position: relative;
+        min-height: 250px;
+        max-width: 340px;
+      }
+
+      .breakdown {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .breakdown-card {
+        padding: 9px 11px;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: #fffdf8;
+      }
+
+      .breakdown-card strong {
+        display: block;
+        font-size: 18px;
+        line-height: 1.1;
+      }
+
+      .breakdown-card span {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .tab.active {
+        background: var(--accent);
+        color: white;
+      }
+
+      .danger {
+        background: #a84734;
+        color: white;
+        font-weight: 700;
+      }
+
+      .workspace-panel-body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        height: 720px;
+        min-height: 0;
+      }
+
+      .view {
+        display: none;
+      }
+
+      .view.active {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .dashboard-view {
+        gap: 14px;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+        min-height: 0;
+      }
+
+      .workspace-card {
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #fffdf8;
+      }
+
+      .workspace-card h3 {
+        margin: 0 0 6px;
+        font-size: 14px;
+      }
+
+      .workspace-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .wide-chart-scroll {
+        overflow-x: auto;
+        overflow-y: hidden;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #fffdf8;
+      }
+
+      .wide-chart-inner {
+        position: relative;
+        min-height: 360px;
+        padding: 10px 14px 12px;
+      }
+
+      .wide-chart-canvas {
+        display: block;
+        height: 320px;
+      }
+
+      .table-wrap {
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #fffdfa;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 900px;
+      }
+
+      th, td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #ece4d4;
+        vertical-align: top;
+        text-align: left;
+        font-size: 12px;
+      }
+
+      th {
+        position: sticky;
+        top: 0;
+        background: #f9f4ea;
+        z-index: 1;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      td code {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 12px;
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #ece8dd;
+        font-size: 11px;
+      }
+
+      .pill.true { background: #daf0df; color: #16613b; }
+      .pill.false { background: #efe0d8; color: #8e4a2c; }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .log-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 8px;
+        max-height: 240px;
+        overflow: auto;
+        min-height: 0;
+      }
+
+      .log-item {
+        padding: 8px 10px;
+        border-radius: 12px;
+        background: #fffdf8;
+        border: 1px solid var(--line);
+        font-size: 12px;
+      }
+
+      .log-item.incoming {
+        animation: log-in 460ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      .log-item strong {
+        display: block;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .recent-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        gap: 8px;
+        overflow: auto;
+        min-height: 0;
+      }
+
+      .recent-list li {
+        padding: 8px 10px;
+        border-radius: 12px;
+        background: #fffdf8;
+        border: 1px solid var(--line);
+        font-size: 12px;
+      }
+
+      .dual-stack {
+        display: grid;
+        grid-template-rows: minmax(0, 1.25fr) minmax(0, 1fr);
+        gap: 16px;
+        height: 100%;
+        min-height: 0;
+      }
+
+      .dual-stack > div {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      .table-wrap {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+      }
+
+      @keyframes log-in {
+        0% {
+          opacity: 0;
+          transform: translateY(-10px) scale(0.98);
+          background: #fff0cf;
+        }
+        60% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+        100% {
+          background: #fffdf8;
+        }
+      }
+
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+
+      @media (max-width: 1100px) {
+        .layout { grid-template-columns: 1fr; }
+        .chart-layout { grid-template-columns: 1fr; }
+        .chart-wrap { max-width: none; }
+      }
+
+      @media (max-width: 760px) {
+        .shell { padding: 14px; }
+        .toolbar { grid-template-columns: 1fr; }
+        .metric-grid { grid-template-columns: 1fr 1fr; }
+        .breakdown { grid-template-columns: 1fr 1fr; }
+        .workspace-panel-body { height: 640px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <section class="hero">
+        <h1>Carlist Live Controller</h1>
+        <p>
+          Flask + SSE controller for the SQLite classifier. Start a run, watch row-by-row updates,
+          and search the live table without touching Excel.
+        </p>
+        <p class="muted">DB: <code>{{ db_path }}</code></p>
+      </section>
+
+      <section class="panel chart-panel">
+        <div class="panel-head">
+          <h2>Type Snapshot</h2>
+          <p>Current type distribution in SQLite, refreshed from the live summary feed.</p>
+        </div>
+        <div class="panel-body chart-layout">
+          <div class="chart-wrap">
+            <canvas id="typeChart"></canvas>
+          </div>
+          <div id="typeBreakdown" class="breakdown"></div>
+        </div>
+      </section>
+
+      <div class="layout">
+        <aside class="stack">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Run Control</h2>
+              <p>Trigger a new classification batch and monitor it in real time.</p>
+            </div>
+            <div class="panel-body stack">
+              <div id="statusChip" class="status-chip idle">Idle</div>
+              <div class="metric-grid">
+                <div class="metric"><strong id="processedValue">0</strong><span>Processed</span></div>
+                <div class="metric"><strong id="totalTasksValue">0</strong><span>Current Batch</span></div>
+                <div class="metric"><strong id="totalRowsValue">0</strong><span>Total Rows</span></div>
+                <div class="metric"><strong id="unknownCountValue">0</strong><span>Unknown Rows</span></div>
+              </div>
+              <form id="runForm" class="stack">
+                <div class="field">
+                  <label for="limitInput">Limit</label>
+                  <input id="limitInput" name="limit" type="number" min="1" value="{{ default_limit }}">
+                </div>
+                <div class="field">
+                  <label for="startRowInput">Start With Row</label>
+                  <input id="startRowInput" name="start_row" type="number" min="1" value="1">
+                </div>
+                <div class="field">
+                  <label for="delayInput">Delay (seconds)</label>
+                  <input id="delayInput" name="delay" type="number" min="0" step="0.1" value="{{ default_delay }}">
+                </div>
+                <label class="checkbox-row"><input type="checkbox" name="allow_unknown" checked> Process `unknown` rows</label>
+                <label class="checkbox-row"><input type="checkbox" name="overwrite"> Overwrite existing rows</label>
+                <label class="checkbox-row"><input type="checkbox" name="fix_hybrid"> Fix suspect hybrid rows</label>
+                <label class="checkbox-row"><input type="checkbox" name="browser"> Browser mode</label>
+                <label class="checkbox-row"><input type="checkbox" name="reimport_db"> Reimport DB from RAW.xlsx first</label>
+                <div class="button-row">
+                  <button class="primary" type="submit">Start Run</button>
+                  <button class="danger" type="button" id="stopButton">Stop</button>
+                  <button class="ghost" type="button" id="refreshButton">Refresh Table</button>
+                </div>
+              </form>
+            </div>
+          </section>
+        </aside>
+
+        <main class="stack">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Live Workspace</h2>
+              <p>Switch between the dashboard, live log stream, and searchable result table.</p>
+            </div>
+            <div class="panel-body workspace-panel-body">
+              <div class="tabbar" role="tablist" aria-label="Workspace View">
+                <button id="dashboardTab" class="tab active" type="button">Dashboard</button>
+                <button id="logTab" class="tab" type="button">Log</button>
+                <button id="tableTab" class="tab" type="button">Table</button>
+              </div>
+
+              <section id="dashboardView" class="view dashboard-view active">
+                <div class="workspace-card">
+                  <h3>Brand Type Mix</h3>
+                  <p>Stacked bar chart for each brand. Scroll horizontally when the brand list gets long.</p>
+                </div>
+                <div class="wide-chart-scroll">
+                  <div id="brandChartInner" class="wide-chart-inner">
+                    <canvas id="brandTypeChart" class="wide-chart-canvas"></canvas>
+                  </div>
+                </div>
+              </section>
+
+              <section id="logView" class="view">
+                <div class="dual-stack">
+                  <div>
+                    <div class="muted" style="margin-bottom: 10px;">Incoming SSE events appear here immediately.</div>
+                    <ul id="logList" class="log-list"></ul>
+                  </div>
+                  <div>
+                    <div class="muted" style="margin-bottom: 10px;">Freshly updated rows from SQLite.</div>
+                    <ul id="recentList" class="recent-list"></ul>
+                  </div>
+                </div>
+              </section>
+
+              <section id="tableView" class="view">
+                <div class="toolbar">
+                  <input id="searchInput" type="text" placeholder="Search row, car info, brand, URL...">
+                  <select id="typeFilter">
+                    <option value="">All Types</option>
+                    <option value="diesel">diesel</option>
+                    <option value="petrol">petrol</option>
+                    <option value="electric">electric</option>
+                    <option value="electric/petrol">electric/petrol</option>
+                    <option value="unknown">unknown</option>
+                  </select>
+                  <input id="tableLimitInput" type="number" min="5" max="30" step="5" value="30" placeholder="Max Rows">
+                  <button id="searchButton" class="primary" type="button">Search</button>
+                </div>
+                <div class="muted" id="tableMeta">Loading…</div>
+                <div class="table-wrap" style="margin-top: 12px;">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Row</th>
+                        <th>Car Info</th>
+                        <th>Brand</th>
+                        <th>Type</th>
+                        <th>Evidence URL</th>
+                        <th>URL Prove</th>
+                        <th>Updated</th>
+                      </tr>
+                    </thead>
+                    <tbody id="vehicleTableBody"></tbody>
+                  </table>
+                </div>
+                <div class="button-row" style="margin-top: 12px;">
+                  <button id="prevButton" class="ghost" type="button">Previous</button>
+                  <button id="nextButton" class="ghost" type="button">Next</button>
+                </div>
+              </section>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const state = {
+        limit: 30,
+        offset: 0,
+        total: 0,
+        search: "",
+        type: "",
+        running: false,
+        isSubmitting: false,
+        isStopping: false,
+        stopRequested: false,
+        view: "dashboard",
+        chart: null,
+        brandChart: null,
+        brandTypeBreakdown: [],
+      };
+
+      const els = {
+        statusChip: document.getElementById("statusChip"),
+        processedValue: document.getElementById("processedValue"),
+        totalTasksValue: document.getElementById("totalTasksValue"),
+        totalRowsValue: document.getElementById("totalRowsValue"),
+        unknownCountValue: document.getElementById("unknownCountValue"),
+        runForm: document.getElementById("runForm"),
+        runButton: document.querySelector('#runForm button[type="submit"]'),
+        stopButton: document.getElementById("stopButton"),
+        refreshButton: document.getElementById("refreshButton"),
+        dashboardTab: document.getElementById("dashboardTab"),
+        logList: document.getElementById("logList"),
+        recentList: document.getElementById("recentList"),
+        logTab: document.getElementById("logTab"),
+        tableTab: document.getElementById("tableTab"),
+        dashboardView: document.getElementById("dashboardView"),
+        logView: document.getElementById("logView"),
+        tableView: document.getElementById("tableView"),
+        brandChartInner: document.getElementById("brandChartInner"),
+        brandTypeChart: document.getElementById("brandTypeChart"),
+        tableBody: document.getElementById("vehicleTableBody"),
+        tableMeta: document.getElementById("tableMeta"),
+        searchInput: document.getElementById("searchInput"),
+        typeFilter: document.getElementById("typeFilter"),
+        startRowInput: document.getElementById("startRowInput"),
+        tableLimitInput: document.getElementById("tableLimitInput"),
+        searchButton: document.getElementById("searchButton"),
+        prevButton: document.getElementById("prevButton"),
+        nextButton: document.getElementById("nextButton"),
+        typeChart: document.getElementById("typeChart"),
+        typeBreakdown: document.getElementById("typeBreakdown"),
+      };
+
+      const typePalette = {
+        diesel: "#556b2f",
+        petrol: "#d97706",
+        electric: "#0f766e",
+        "electric/petrol": "#b45309",
+        unknown: "#7c6f64",
+        empty: "#d8cfbf",
+      };
+
+      async function fetchJson(url, options = {}) {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+          const message = await response.text();
+          throw new Error(message || `HTTP ${response.status}`);
+        }
+        return response.json();
+      }
+
+      function setStatus(snapshot) {
+        const running = Boolean(snapshot.running);
+        const hasError = Boolean(snapshot.error);
+        const stopRequested = Boolean(snapshot.stop_requested);
+        state.running = running;
+        state.stopRequested = stopRequested;
+        if (!running) {
+          state.isStopping = false;
+        }
+        els.statusChip.textContent = snapshot.message || (running ? "Running" : "Idle");
+        els.statusChip.className = "status-chip" + (hasError ? " error" : running ? "" : " idle");
+        els.processedValue.textContent = snapshot.processed ?? 0;
+        els.totalTasksValue.textContent = snapshot.total_tasks ?? 0;
+        if (snapshot.start_row) {
+          els.startRowInput.value = String(snapshot.start_row);
+        }
+        els.runButton.disabled = running || state.isSubmitting || state.isStopping || stopRequested;
+        els.runButton.textContent = state.isSubmitting ? "Starting..." : (running ? "Running..." : "Start Run");
+        els.stopButton.disabled = !running || state.isStopping || stopRequested;
+        els.stopButton.textContent = (state.isStopping || stopRequested) ? "Stopping..." : "Stop";
+      }
+
+      function addLog(entry) {
+        const li = document.createElement("li");
+        li.className = "log-item incoming";
+        li.innerHTML = `
+          <strong>${entry.timestamp || ""} · ${entry.event}</strong>
+          <div>${entry.message || ""}</div>
+        `;
+        li.addEventListener("animationend", () => {
+          li.classList.remove("incoming");
+        }, { once: true });
+        els.logList.prepend(li);
+        while (els.logList.children.length > 40) {
+          els.logList.removeChild(els.logList.lastChild);
+        }
+      }
+
+      function switchView(nextView) {
+        state.view = nextView;
+        const showDashboard = nextView === "dashboard";
+        const showLog = nextView === "log";
+        els.dashboardTab.classList.toggle("active", showDashboard);
+        els.logTab.classList.toggle("active", showLog);
+        els.tableTab.classList.toggle("active", nextView === "table");
+        els.dashboardView.classList.toggle("active", showDashboard);
+        els.logView.classList.toggle("active", showLog);
+        els.tableView.classList.toggle("active", nextView === "table");
+        if (showDashboard) {
+          requestAnimationFrame(() => {
+            renderBrandTypeChart(state.brandTypeBreakdown);
+          });
+        }
+      }
+
+      function renderTypeBreakdown(summary) {
+        const items = [
+          ["diesel", summary.diesel_count ?? 0],
+          ["petrol", summary.petrol_count ?? 0],
+          ["electric", summary.electric_count ?? 0],
+          ["electric/petrol", summary.hybrid_count ?? 0],
+          ["unknown", summary.unknown_count ?? 0],
+          ["empty", summary.empty_count ?? 0],
+        ];
+        els.typeBreakdown.innerHTML = "";
+        for (const [label, value] of items) {
+          const card = document.createElement("div");
+          card.className = "breakdown-card";
+          card.style.boxShadow = `inset 4px 0 0 ${typePalette[label]}`;
+          card.innerHTML = `
+            <strong>${value}</strong>
+            <span>${label}</span>
+          `;
+          els.typeBreakdown.appendChild(card);
+        }
+      }
+
+      function renderTypeChart(summary) {
+        renderTypeBreakdown(summary);
+        if (!window.Chart) {
+          return;
+        }
+        const labels = ["diesel", "petrol", "electric", "electric/petrol", "unknown", "empty"];
+        const values = [
+          summary.diesel_count ?? 0,
+          summary.petrol_count ?? 0,
+          summary.electric_count ?? 0,
+          summary.hybrid_count ?? 0,
+          summary.unknown_count ?? 0,
+          summary.empty_count ?? 0,
+        ];
+        const dataset = {
+          labels,
+          datasets: [{
+            data: values,
+            backgroundColor: labels.map((label) => typePalette[label]),
+            borderColor: "#fffaf0",
+            borderWidth: 2,
+          }],
+        };
+
+        if (state.chart) {
+          state.chart.data = dataset;
+          state.chart.update();
+          return;
+        }
+
+        state.chart = new window.Chart(els.typeChart, {
+          type: "pie",
+          data: dataset,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  boxWidth: 12,
+                  color: "#1f2a2c",
+                  font: {
+                    size: 11,
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function renderBrandTypeChart(breakdown) {
+        if (!window.Chart || !els.brandTypeChart || !els.brandChartInner) {
+          return;
+        }
+
+        if (!breakdown || breakdown.length === 0) {
+          if (state.brandChart) {
+            state.brandChart.destroy();
+            state.brandChart = null;
+          }
+          els.brandChartInner.style.width = "100%";
+          return;
+        }
+
+        const labels = breakdown.map((item) => item.brand);
+        const visualWidth = Math.max(960, labels.length * 56);
+        els.brandChartInner.style.width = `${visualWidth}px`;
+        els.brandTypeChart.width = visualWidth - 28;
+        els.brandTypeChart.height = 320;
+
+        if (state.brandChart) {
+          state.brandChart.destroy();
+          state.brandChart = null;
+        }
+
+        state.brandChart = new window.Chart(els.brandTypeChart, {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              { label: "diesel", data: breakdown.map((item) => item.diesel_count ?? 0), backgroundColor: typePalette.diesel },
+              { label: "petrol", data: breakdown.map((item) => item.petrol_count ?? 0), backgroundColor: typePalette.petrol },
+              { label: "electric", data: breakdown.map((item) => item.electric_count ?? 0), backgroundColor: typePalette.electric },
+              { label: "electric/petrol", data: breakdown.map((item) => item.hybrid_count ?? 0), backgroundColor: typePalette["electric/petrol"] },
+              { label: "unknown", data: breakdown.map((item) => item.unknown_count ?? 0), backgroundColor: typePalette.unknown },
+              { label: "empty", data: breakdown.map((item) => item.empty_count ?? 0), backgroundColor: typePalette.empty },
+            ],
+          },
+          options: {
+            responsive: false,
+            animation: false,
+            scales: {
+              x: {
+                stacked: true,
+                ticks: {
+                  autoSkip: false,
+                  maxRotation: 60,
+                  minRotation: 60,
+                  color: "#4b5852",
+                  font: { size: 10 },
+                },
+                grid: {
+                  display: false,
+                },
+              },
+              y: {
+                stacked: true,
+                beginAtZero: true,
+                ticks: {
+                  precision: 0,
+                  color: "#4b5852",
+                  font: { size: 11 },
+                },
+              },
+            },
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  boxWidth: 12,
+                  color: "#1f2a2c",
+                  font: { size: 11 },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function renderRecent(recentUpdates) {
+        els.recentList.innerHTML = "";
+        for (const row of recentUpdates) {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <strong>#${row.row_number}</strong> ${row.car_info}
+            <div class="muted">${row.type || "unknown"} · ${row.updated_at || ""}</div>
+          `;
+          els.recentList.appendChild(li);
+        }
+      }
+
+      function renderTable(rows) {
+        els.tableBody.innerHTML = "";
+        for (const row of rows) {
+          const tr = document.createElement("tr");
+          const evidenceHtml = row.evidence_url
+            ? `<a href="${row.evidence_url}" target="_blank" rel="noreferrer">${row.evidence_url}</a>`
+            : `<span class="muted">-</span>`;
+          const proveClass = row.url_prove === true ? "true" : "false";
+          const proveText = row.url_prove === null ? "-" : String(row.url_prove);
+          tr.innerHTML = `
+            <td><code>${row.row_number}</code></td>
+            <td>${row.car_info}</td>
+            <td>${row.brand}</td>
+            <td><span class="pill">${row.type || "-"}</span></td>
+            <td>${evidenceHtml}</td>
+            <td><span class="pill ${proveClass}">${proveText}</span></td>
+            <td class="muted">${row.updated_at || ""}</td>
+          `;
+          els.tableBody.appendChild(tr);
+        }
+      }
+
+      async function refreshSummary() {
+        const data = await fetchJson("/api/summary");
+        els.totalRowsValue.textContent = data.summary.total_rows;
+        els.unknownCountValue.textContent = data.summary.unknown_count;
+        state.brandTypeBreakdown = data.brand_type_breakdown || [];
+        renderRecent(data.recent_updates);
+        renderTypeChart(data.summary);
+        if (state.view === "dashboard") {
+          renderBrandTypeChart(state.brandTypeBreakdown);
+        }
+      }
+
+      async function refreshStatus() {
+        const snapshot = await fetchJson("/api/status");
+        setStatus(snapshot);
+        (snapshot.logs || []).slice().reverse().forEach(addLog);
+      }
+
+      async function refreshTable() {
+        const params = new URLSearchParams({
+          limit: String(state.limit),
+          offset: String(state.offset),
+          q: state.search,
+          type: state.type,
+        });
+        const data = await fetchJson(`/api/vehicles?${params.toString()}`);
+        state.total = data.total;
+        state.limit = Number(data.limit || state.limit);
+        els.tableLimitInput.value = String(state.limit);
+        renderTable(data.rows);
+        const start = data.total === 0 ? 0 : state.offset + 1;
+        const end = Math.min(state.offset + state.limit, data.total);
+        els.tableMeta.textContent = `${start}-${end} / ${data.total}`;
+        els.prevButton.disabled = state.offset === 0;
+        els.nextButton.disabled = state.offset + state.limit >= data.total;
+      }
+
+      function debouncedRefresh() {
+        clearTimeout(window.__tableRefreshTimer);
+        window.__tableRefreshTimer = setTimeout(() => {
+          refreshTable().catch(console.error);
+          refreshSummary().catch(console.error);
+        }, 250);
+      }
+
+      function connectSse() {
+        const stream = new EventSource("/events");
+        ["snapshot", "queued", "db_ready", "client_ready", "run_started", "row_start", "row_done", "run_finished", "run_error", "run_stopped", "stop_requested", "log"].forEach((eventName) => {
+          stream.addEventListener(eventName, (event) => {
+            const payload = JSON.parse(event.data);
+            if (eventName === "snapshot") {
+              setStatus(payload);
+              (payload.logs || []).slice().reverse().forEach(addLog);
+              return;
+            }
+            if (payload.message) {
+              addLog({
+                event: eventName,
+                timestamp: payload.timestamp,
+                message: payload.message,
+              });
+            }
+            if (["queued", "run_started", "row_start", "row_done", "run_finished", "run_error", "run_stopped", "stop_requested"].includes(eventName)) {
+              fetchJson("/api/status").then(setStatus).catch(console.error);
+            }
+            if (eventName === "row_done" || eventName === "run_finished" || eventName === "run_error" || eventName === "run_stopped" || eventName === "db_ready") {
+              debouncedRefresh();
+            }
+          });
+        });
+      }
+
+      els.runForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (state.running || state.isSubmitting || state.isStopping || state.stopRequested) {
+          addLog({
+            event: "run_busy",
+            timestamp: new Date().toISOString(),
+            message: "A run is already in progress.",
+          });
+          return;
+        }
+        const formData = new FormData(els.runForm);
+        const payload = Object.fromEntries(formData.entries());
+        for (const checkbox of els.runForm.querySelectorAll('input[type="checkbox"]')) {
+          payload[checkbox.name] = checkbox.checked;
+        }
+        state.isSubmitting = true;
+        setStatus({
+          running: state.running,
+          stop_requested: false,
+          error: "",
+          message: state.running ? "Running" : "Starting",
+          processed: 0,
+          total_tasks: 0,
+          start_row: Number(els.startRowInput.value || 1),
+        });
+        try {
+          const result = await fetchJson("/api/run", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          setStatus(result);
+          if (result.accepted === false && result.notice) {
+            addLog({ event: "run_busy", timestamp: new Date().toISOString(), message: result.notice });
+          }
+        } catch (error) {
+          addLog({ event: "run_error", timestamp: new Date().toISOString(), message: error.message });
+        } finally {
+          state.isSubmitting = false;
+          fetchJson("/api/status").then(setStatus).catch(console.error);
+        }
+      });
+
+      els.stopButton.addEventListener("click", async () => {
+        if (!state.running || state.isStopping || state.stopRequested) {
+          return;
+        }
+        state.isStopping = true;
+        setStatus({
+          running: true,
+          stop_requested: true,
+          error: "",
+          message: "Stopping after the current row.",
+          processed: Number(els.processedValue.textContent || 0),
+          total_tasks: Number(els.totalTasksValue.textContent || 0),
+          start_row: Number(els.startRowInput.value || 1),
+        });
+        try {
+          const result = await fetchJson("/api/stop", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: "{}",
+          });
+          setStatus(result);
+          if (result.notice) {
+            addLog({ event: result.accepted ? "stop_requested" : "stop_ignored", timestamp: new Date().toISOString(), message: result.notice });
+          }
+        } catch (error) {
+          state.isStopping = false;
+          addLog({ event: "stop_error", timestamp: new Date().toISOString(), message: error.message });
+        } finally {
+          fetchJson("/api/status").then(setStatus).catch(console.error);
+        }
+      });
+
+      els.refreshButton.addEventListener("click", () => {
+        refreshTable().catch(console.error);
+        refreshSummary().catch(console.error);
+      });
+
+      els.logTab.addEventListener("click", () => {
+        switchView("log");
+      });
+
+      els.dashboardTab.addEventListener("click", () => {
+        switchView("dashboard");
+      });
+
+      els.tableTab.addEventListener("click", () => {
+        switchView("table");
+        refreshTable().catch(console.error);
+      });
+
+      els.searchButton.addEventListener("click", () => {
+        state.search = els.searchInput.value.trim();
+        state.type = els.typeFilter.value;
+        state.limit = Math.max(5, Math.min(30, Number(els.tableLimitInput.value || 30)));
+        els.tableLimitInput.value = String(state.limit);
+        state.offset = 0;
+        refreshTable().catch(console.error);
+      });
+
+      els.searchInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          els.searchButton.click();
+        }
+      });
+
+      els.prevButton.addEventListener("click", () => {
+        state.offset = Math.max(0, state.offset - state.limit);
+        refreshTable().catch(console.error);
+      });
+
+      els.nextButton.addEventListener("click", () => {
+        state.offset += state.limit;
+        refreshTable().catch(console.error);
+      });
+
+      els.tableLimitInput.addEventListener("change", () => {
+        state.limit = Math.max(5, Math.min(30, Number(els.tableLimitInput.value || 30)));
+        els.tableLimitInput.value = String(state.limit);
+        state.offset = 0;
+        refreshTable().catch(console.error);
+      });
+
+      Promise.all([
+        refreshSummary(),
+        refreshTable(),
+        refreshStatus(),
+      ]).catch(console.error);
+      switchView("dashboard");
+      connectSse();
+    </script>
+  </body>
+</html>
