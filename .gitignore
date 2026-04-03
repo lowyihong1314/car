@@ -6,5 +6,6 @@
 __pycache__/
 *.pyc
 *.db
+!result_using_python/carlist_type_mapping_python.db
 *.db-shm
 *.db-wal
