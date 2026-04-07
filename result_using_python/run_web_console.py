@@ -27,7 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Bind host (default: 0.0.0.0)",
     )
     parser.add_argument(
-        "--port",
+        "--port
         type=int,
         default=3340,
         help="Bind port (default: 3340)",
