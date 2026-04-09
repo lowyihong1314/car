@@ -83,6 +83,77 @@ CAR_INFO_PATTERNS: list[tuple[object, str, str]] = [
     (_re.compile(r"\bVOLVO\s+(S60|S80|S90|V40|V60|V90|XC40|XC60|XC90|C30|C70)\b",
                  _re.IGNORECASE),
      "petrol", "https://en.wikipedia.org/wiki/Volvo_Cars"),
+
+    # ── Toyota Industrial Equipment ──────────────────────────────────────────
+    # Toyota FD / 7FD / 8FD series forklifts — diesel (FD = diesel drive)
+    (_re.compile(r"\bTOYOTA\b.*\b\d*FD[A-Z]?\d+\b", _re.IGNORECASE),
+     "diesel", "https://www.toyota-industries.com/products/forklift/"),
+    # Toyota FB / FBR / FBRE series forklifts — battery electric
+    (_re.compile(r"\bTOYOTA\b.*\b\d*FB[A-Z]*\d+\b", _re.IGNORECASE),
+     "electric", "https://www.toyota-industries.com/products/forklift/"),
+    # Toyota SD25 / 3SD / 4SD shovel loaders — diesel
+    (_re.compile(r"\bTOYOTA\s+\d*SD\d+\b", _re.IGNORECASE),
+     "diesel", "https://en.wikipedia.org/wiki/Toyota"),
+
+    # ── Toyota commercial truck chassis codes — diesel ───────────────────────
+    # KDY/KDH = HiAce diesel, LY = Light Truck diesel, XZU/XZY = Dyna/Toyoace diesel
+    # BU = older diesel truck; KDY280/KDY231 etc all K-series diesel
+    (_re.compile(
+        r"\bTOYOTA\s+(?:REBUILD\s+)?(?:KDY|KDH|LY|XZU|XZY|BU)\d+\b",
+        _re.IGNORECASE),
+     "diesel", "https://en.wikipedia.org/wiki/Toyota_HiAce"),
+
+    # ── Toyota passenger/lifestyle models — petrol only in Malaysia ──────────
+    # Vios, Corolla Altis (no diesel/hybrid variant sold here)
+    (_re.compile(r"\bTOYOTA\s+(?:VIOS|ALTIS)\b", _re.IGNORECASE),
+     "petrol", "https://en.wikipedia.org/wiki/Toyota_Vios"),
+    # GR86 / 86 — rear-wheel-drive sports coupe, petrol only
+    (_re.compile(r"\bTOYOTA\s+(?:GR\s*)?86\b", _re.IGNORECASE),
+     "petrol", "https://en.wikipedia.org/wiki/Toyota_GR86"),
+    # Hiace passenger (KDH = diesel already caught above; HIACE alone → diesel)
+    (_re.compile(r"\bTOYOTA\s+(?:HIACE|HI-ACE)\b", _re.IGNORECASE),
+     "diesel", "https://en.wikipedia.org/wiki/Toyota_HiAce"),
+    # Land Cruiser / Fortuner / HiLux → diesel in Malaysia market
+    (_re.compile(r"\bTOYOTA\s+(?:LAND\s*CRUISER|LANDCRUISER|FORTUNER|HILUX)\b",
+                 _re.IGNORECASE),
+     "diesel", "https://en.wikipedia.org/wiki/Toyota_Land_Cruiser"),
+
+    # ── Nissan commercial truck chassis codes — diesel ───────────────────────
+    # CG4/CG5 prime movers (not covered by existing CD/CW pattern)
+    (_re.compile(r"\bNISSAN\s+CG[4-6]\b", _re.IGNORECASE),
+     "diesel", "https://en.wikipedia.org/wiki/Nissan_Diesel"),
+    # GK4/GW4/GKB4 prime movers, MK/SK/PK Condor series — all diesel
+    (_re.compile(
+        r"\bNISSAN\s+(?:CONDOR\s+)?(?:GK[4-9]|GW[4-9]|GKB\d|MK3[5-9]|MK4\d|SK\d{2}|PK\d{2})\b",
+        _re.IGNORECASE),
+     "diesel", "https://en.wikipedia.org/wiki/Nissan_Diesel"),
+    # Urvan/Caravan/Civilian — diesel vans
+    (_re.compile(r"\bNISSAN\s+(?:URVAN|CARAVAN|CIVILIAN)\b", _re.IGNORECASE),
+     "diesel", "https://en.wikipedia.org/wiki/Nissan_Caravan"),
+
+    # ── Nissan passenger models — petrol in Malaysia ─────────────────────────
+    # Almera / Livina / Latio — petrol only (no diesel variant in MY)
+    (_re.compile(r"\bNISSAN\s+(?:ALMERA|ALMEERA|GRAND\s+LIVINA|LIVINA|LATIO)\b",
+                 _re.IGNORECASE),
+     "petrol", "https://en.wikipedia.org/wiki/Nissan_Almera"),
+    # X-Trail without hybrid keyword → petrol (2.0L/2.5L petrol CVT in Malaysia)
+    (_re.compile(r"\bNISSAN\s+X[-\s]?TRAIL\b(?!.*\b(?:HYBRID|E-POWER|EPOWER)\b)",
+                 _re.IGNORECASE),
+     "petrol", "https://en.wikipedia.org/wiki/Nissan_X-Trail"),
+    # GT-R — twin-turbo V6 petrol sports car
+    (_re.compile(r"\bNISSAN\s+GT-?R\b", _re.IGNORECASE),
+     "petrol", "https://en.wikipedia.org/wiki/Nissan_GT-R"),
+
+    # ── Honda passenger models — petrol in Malaysia ──────────────────────────
+    # BR-V / WR-V / Brio — no hybrid variant sold in Malaysia
+    (_re.compile(r"\bHONDA\s+(?:BRV|BR-V|WRV|WR-V|BRIO)\b", _re.IGNORECASE),
+     "petrol", "https://en.wikipedia.org/wiki/Honda_BR-V"),
+    # City / Civic / Jazz / HR-V / CR-V without hybrid keyword → petrol
+    (_re.compile(
+        r"\bHONDA\s+(?:CITY|CIVIC|JAZZ|HRV|HR-V|CRV|CR-V|ACCORD|ODYSSEY|STEPWGN|STEPWAGON)\b"
+        r"(?!.*\b(?:HYBRID|E-HEV|PHEV|PLUG.IN)\b)",
+        _re.IGNORECASE),
+     "petrol", "https://en.wikipedia.org/wiki/Honda_City"),
 ]
 
 # Brands whose fuel type is unambiguous.
@@ -144,6 +215,8 @@ BRAND_DEFAULTS: dict[str, tuple[str, str]] = {
     "HANGCHA":     ("diesel",   "https://en.wikipedia.org/wiki/Hangcha_Group"),
     "TCM":         ("diesel",   "https://en.wikipedia.org/wiki/TCM_Corporation"),
     "UNICARRIERS": ("diesel",   "https://en.wikipedia.org/wiki/UniCarriers"),
+    # Malaysian national car brands — all petrol (no diesel/EV variants sold locally)
+    "PERODUA":     ("petrol",   "https://www.perodua.com.my/cars.html"),
     # Motorcycles — petrol
     "HARLEY":      ("petrol",   "https://www.harley-davidson.com/us/en/motorcycles.html"),
     "DUCATI":      ("petrol",   "https://www.ducati.com/ww/en/bikes"),
@@ -154,7 +227,7 @@ BRAND_URL_PATTERNS: dict[str, list[str]] = {
     "TOYOTA":        ["https://www.toyota.com/{model}", "https://www.toyota.com/models/{model}"],
     "BMW":           ["https://www.bmw.com/en/all-models/{model}.html"],
     "AUDI":          ["https://www.audi.com/en/models/{model}.html"],
-    "HONDA":         ["https://automobiles.honda.com/{model}"],
+    "HONDA":         ["https://www.honda.com.my/cars/{model}", "https://automobiles.honda.com/{model}"],
     "NISSAN":        ["https://www.nissan-global.com/EN/VEHICLE/{model}/"],
     "MAZDA":         ["https://www.mazda.com/en/vehicles/{model}/"],
     "MITSUBISHI":    ["https://www.mitsubishi-motors.com/en/vehicles/{model}/"],
@@ -179,8 +252,8 @@ OFFICIAL_DOMAINS = {
     "AUDI": ["www.audi.com", "www.audiusa.com"],
     "BMW": ["www.bmw.com"],
     "TOYOTA": ["www.toyota.com", "global.toyota"],
-    "HONDA": ["global.honda", "automobiles.honda.com"],
-    "NISSAN": ["nissan.com.my", "www.nissanusa.com"],
+    "HONDA": ["www.honda.com.my", "global.honda", "automobiles.honda.com"],
+    "NISSAN": ["www.nissan.com.my", "nissan.com.my", "www.nissanusa.com"],
     "MAZDA": ["www.mazda.com", "www.mazdausa.com"],
     "MITSUBISHI": ["www.mitsubishi-motors.com", "www.mitsubishicars.com"],
     "MERCEDES_BENZ": ["www.mercedes-benz.com", "www.mbusa.com"],

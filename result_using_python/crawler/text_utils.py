@@ -14,7 +14,8 @@ from .models import RowTask
 # extracting model tokens or building search queries.
 _NOISE_TOKENS: frozenset[str] = frozenset({
     # Registration / condition status
-    "RECOND", "UNREG", "UNREGISTERED", "REGISTERED", "NEW", "USED",
+    "RECOND", "RECCOND", "RECON", "REBUILD", "REBUILT", "REFURBISHED",
+    "UNREG", "UNREGISTERED", "REGISTERED", "NEW", "USED",
     # Transmission
     "AT", "MT", "CVT", "DCT", "AMT", "DSG", "PDK", "SA", "SA",
     # Drive configuration
@@ -444,12 +445,37 @@ def score_text(text: str, car_info: str = "") -> tuple[str, int, bool]:
             *KEYWORDS["petrol"],
         )
     )
-    substantial_scores = [score for score in (hybrid_score, electric_score, diesel_score, petrol_score) if score >= 3]
+    # When car_info has no hybrid hint, hybrid_score is already suppressed above.
+    # Don't let it pollute the "too ambiguous → unknown" check.
+    car_info_has_electric = any(kw in car_info_lower for kw in KEYWORDS["electric"])
+    effective_scores = []
+    if (car_info_has_hybrid or hybrid_score >= 3) and hybrid_score >= 3:
+        effective_scores.append(hybrid_score)
+    if car_info_has_electric or electric_score >= 2:
+        effective_scores.append(electric_score)
+    effective_scores.append(diesel_score)
+    effective_scores.append(petrol_score)
+    substantial_scores = [s for s in effective_scores if s >= 3]
     if len(substantial_scores) >= 2 and not explicit_car_hint:
-        return "unknown", max(substantial_scores), False
+        # Still ambiguous — but if diesel and petrol clearly dominate and one is
+        # notably higher, trust the winner rather than giving up.
+        top_two = sorted(substantial_scores, reverse=True)[:2]
+        if top_two[0] >= top_two[1] * 2:
+            # One fuel type is at least 2× the next — trust it
+            pass  # fall through to diesel/petrol comparison below
+        else:
+            return "unknown", max(substantial_scores), False
 
-    if diesel_score > 0 and petrol_score > 0 and abs(diesel_score - petrol_score) <= 1:
-        return "unknown", max(diesel_score, petrol_score), False
+    # Diesel vs petrol tie-break: only call it unknown when scores are truly equal
+    # (absolute difference ≤ 1 AND neither dominates by ratio).
+    if diesel_score > 0 and petrol_score > 0:
+        diff = abs(diesel_score - petrol_score)
+        top = max(diesel_score, petrol_score)
+        if diff <= 1 and top < 4:
+            return "unknown", top, False
+        # If scores are close in ratio (within 25%) and both substantial, stay unknown
+        if diff <= 1 and diesel_score >= 4 and petrol_score >= 4:
+            return "unknown", top, False
 
     if diesel_score > petrol_score:
         contradicted = any(term in lowered for term in NEGATIVE_HINTS["diesel"])
